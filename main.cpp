@@ -6,6 +6,7 @@
 
 // ************ includes ****************************
 #include "hardware/gpio.h"
+#include "hardware/irq.h"
 #include "pico/stdlib.h"
 #include <cstdlib>
 #include "stdio.h"
@@ -66,6 +67,8 @@ char uiparam_doaction=ACTION_IDLE;
 char uiparam_modifier=MODIFIER_ON;
 // repeating timer
 uint32_t alarmPeriod;
+alarm_pool_t* alarm_pool;
+alarm_id_t ui_alarm_id;
 // hobby servo
 // set initial angle to 0 deg, and max angle to 180 deg, and enable power-saving capability
 HServo Servo(HSERVO_CONTROL_PIN, 0, 180, HSERVO_POWER_PIN);
@@ -136,6 +139,9 @@ int init(void) {
     uart_init(uart0, BAUD);
     gpio_set_function(0, GPIO_FUNC_UART);
     gpio_set_function(1, GPIO_FUNC_UART);
+    alarm_pool = alarm_pool_create(2, 16); // create an alarm pool
+    irq_set_priority(TIMER_IRQ_2, 0xc0); // larger number is lower priority
+
     sleep_ms(100);
 
     if (BUTTON_PRESSED) { // is the Operator button pressed on the board at powerup?
@@ -145,9 +151,8 @@ int init(void) {
             usb_control = 1;
             printf("Motor Subsystem is under USB control\n");
             printf("$ ");
-            add_alarm_in_ms(ALARM_MSEC_PERIOD, pcui_callback, NULL, false);
-            //alarmPeriod = 1000000/ALARM_FREQ;
-            //alarm_in_us(alarmPeriod); // kick off the timer
+            //add_alarm_in_ms(ALARM_MSEC_PERIOD, pcui_callback, NULL, false);
+            ui_alarm_id = alarm_pool_add_alarm_in_ms(alarm_pool, ALARM_MSEC_PERIOD, pcui_callback, NULL, false);
         }
         while(1) {
             if (BUTTON_RELEASED)
@@ -160,7 +165,8 @@ int init(void) {
         usb_control = 0;
         set_menu(MENU_M2M);
         m2m_response((char *)RESP_OK);
-        add_alarm_in_ms(ALARM_MSEC_PERIOD, pcui_callback, NULL, false);
+        //add_alarm_in_ms(ALARM_MSEC_PERIOD, pcui_callback, NULL, false);
+        ui_alarm_id = alarm_pool_add_alarm_in_ms(alarm_pool, ALARM_MSEC_PERIOD, pcui_callback, NULL, false);
     }
 
     return(0);

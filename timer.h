@@ -7,8 +7,8 @@
 
 
 // timer period, both must be the same, but expressed in msec and usec
-#define ALARM_MSEC_PERIOD 100
-#define ALARM_USEC_PERIOD 100000
+#define ALARM_MSEC_PERIOD 20
+#define ALARM_USEC_PERIOD 20000
 
 // timer
 //void alarm_in_us(uint32_t delay_us); // used to start the timer

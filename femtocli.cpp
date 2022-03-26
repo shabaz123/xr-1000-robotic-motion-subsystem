@@ -991,6 +991,9 @@ int64_t pcui_callback(alarm_id_t id, void *user_data)
         }
         c = uart_getc(uart0);
     }
+    if ((pc_idx==0) && (c=='\0')) {
+        return(ALARM_USEC_PERIOD);
+    }
 #endif
     // Is carriage return pressed?
 #ifdef LINUX
@@ -1000,11 +1003,18 @@ int64_t pcui_callback(alarm_id_t id, void *user_data)
 #endif
     {
         rxbuf[pc_idx]='\0';
+        if (pc_idx>0) {
+            if (rxbuf[pc_idx-1] == '\n') {
+                // line was terminated with \n\r
+                pc_idx--;
+                rxbuf[pc_idx]='\0';
+            }
+        }
         strcpy(oldrxbuf, rxbuf); // store the history
         parse_input();
         pc_idx=0;
     }
-    else // no, something else was pressed. Not really valid for UART mode, to be fixed.
+    else // no, something else was pressed. Not all really valid for UART mode, to be fixed.
     {
         rxbuf[pc_idx]=c;
         //printf("%d", c);
